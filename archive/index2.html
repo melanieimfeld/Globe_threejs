@@ -1,0 +1,358 @@
+<!doctype html>
+<html>
+<head>
+<!-- <link href="index.css" rel="stylesheet" type="text/css"> -->
+<head>
+<meta charset="UTF-8">
+
+<meta property="og:title" content="Personal portfolio"/>
+<meta property="og:image" content="melanie.imfeld.info/linkedin.png"/>
+<meta property="og:url" content="melanie.imfeld.info"/>
+<meta property="og:site_name" content="Portfolio"/>
+<meta property="og:description" content="A selection of works"/>
+
+<title>Portfolio</title>
+<link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
+<link rel="shortcut icon" href="Bilder/Bilder_Website Format/favicon.ico" type="image/x-icon" />
+<script src="js/three.js"></script>
+<script src="js/jquery.min.js"></script>
+<script src="js/OrbitControls.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.2.2/d3.min.js"></script>
+
+
+<style>
+
+.header{
+background-color: transparent; 
+} 
+
+hr {
+
+  border: 0;
+}
+
+</style>
+
+</head>
+
+<body>
+<div class="header">
+<h1>A small online portfolio</h1>
+<hr>
+
+<ul class="navigation">
+  <li><a href="projekte.html">Projects</a></li>
+  <li><a href="about.html">About</a></li>
+  <li><a href="contact.html">Contact</a></li>
+  <li><a href="https://melanieimfeld.github.io/">+Blog</a></li>
+</ul>
+
+</div>
+<div id="earth" style=" position:inline-block; width:100%; height:100vh; margin-top: 30px auto 0;" >
+</div>
+<!-- <div class="video"> 
+<a href="projekte.html"><img src="Bilder/cra_mt_1.jpg" width=100% height="auto" alt="Intro"/></a>
+</div> -->
+<script>
+
+//curves on globe
+//https://medium.com/@xiaoyangzhao/drawing-curves-on-webgl-globe-using-three-js-and-d3-draft-7e782ffd7ab
+
+const coords = [[ ['47.3673', '8.55'], ['45.0703', '7.6869']],
+  [['45.0703', '7.6869'], ['51.5081', '-0.128']],
+  [['47.3673', '8.55'], ['41.3083', '-72.9279' ]],
+	[['47.3673', '8.55'], ['26.1224',  '-80.13731' ]], //ch - florida
+	[['47.3673', '8.55'], ['50.0755',  '14.4378' ]], //ch - prag
+	[['47.3673', '8.55'], ['26.1224',  '-80.13731' ]], //ch - florida
+  [['47.3673', '8.55'],['41.3083', '-72.9279' ]] //ny -nh
+  ];
+
+const coord1 = ['47.3673', '8.55'];
+const coord2 = ['45.0703', '7.6869'];
+
+//const GLOBE_RADIUS = 0.5;
+var controls, counter=0;
+
+const CURVE_SEGMENTS = 32;
+const CURVE_MIN_ALTITUDE = 20;
+const CURVE_MAX_ALTITUDE = 200;
+
+var radius = 6371;
+var radius1 = 0.5;
+const altitude = 0.15;
+
+var tangent = new THREE.Vector3();
+var axis = new THREE.Vector3();
+var up = new THREE.Vector3(0, 1, 0);
+
+    var onRenderFcts= [];
+    var scene = new THREE.Scene();
+
+    var geometry   = new THREE.SphereGeometry(radius1, 50, 50)
+  // var material  = new THREE.MeshPhongMaterial({
+  //  map: texture})
+   var elmt = document.getElementById("earth");
+
+   console.log('window',window.innerWidth,window.innerHeight)
+   console.log('element',elmt.clientWidth, elmt.clientHeight)
+
+    var material  = new THREE.MeshPhongMaterial()
+    var camera  = new THREE.PerspectiveCamera(45, elmt.clientWidth / elmt.clientHeight, 0.01, 1000 );
+
+    var light1  = new THREE.DirectionalLight( 0xcccccc, 1 )
+  
+    var renderer  = new THREE.WebGLRenderer({ antialias: true });
+
+
+    var earthMesh = new THREE.Mesh(geometry, material)
+    //var controls = new THREE.OrbitControls(scene);
+    //var controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+    function createTube(coordPair){
+      //console.log("selected cords", coordPair);
+      const interpolate = d3.geoInterpolate(coordPair[0], coordPair[1]);
+      const midCoord1 = interpolate(0.5);
+      const midCoord2 = interpolate(0.75);
+
+      //console.log("interpolate", interpolate, midCoord1);
+
+      var curve = new THREE.QuadraticBezierCurve3(
+        converttoCartesian2(radius1, coordPair[0]),
+        converttoCartesian2(radius1 + altitude, midCoord1),
+        converttoCartesian2(radius1, coordPair[1])
+      );
+
+      return curve;
+    }
+
+
+    var sphere = new THREE.SphereGeometry(0.006, 32, 32);
+    var object = new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({
+        color: 0xff0000
+    }));
+
+    var meshArray = [];
+    var objectArray = [];
+
+    for (let i=0;i<coords.length;i++){
+      
+      var tube = new THREE.TubeGeometry(createTube(coords[i]), 30, 0.0009, 50, false);
+      var mesh = new THREE.Mesh(tube, new THREE.MeshLambertMaterial({
+            color: 0xff4500 
+      }));
+
+      meshArray.push(mesh);
+      objectArray.push(object);
+  }
+
+
+    //var mesh2 = createTube(coords[1]);
+    //var mesh3 = createTube(coords[2]);
+    console.log("object", objectArray, "get points of curve", createTube(coords[2]).getPointAt(0.1));
+
+
+
+    // for (let i=0;i<coords.length;i++){
+    // 	var mesh = createTube(coords[i]);
+    // 	meshArray.push(mesh);
+    // 	//console.log("test", i);
+    // }
+
+    //console.log("get point at", curve1.getPointAt(0.1));
+
+    //var points = curve.getPoints( 50 );
+    //var curveGeometry = new THREE.BufferGeometry().setFromPoints( points );
+
+    //var curveMaterial = new THREE.LineBasicMaterial( { color : 0xff4500 } );
+
+    // Create the final object to add to the scene
+    //var curveObject = new THREE.Line( curveGeometry, curveMaterial );
+
+  //-----------the curve-----------
+
+
+$(document).ready(function() {
+ 
+  console.log(elmt.clientWidth);
+  
+  //renderer.setSize( elmt.clientWidth, elmt.clientHeight );
+  //document.body.appendChild( renderer.domElement );
+  elmt.appendChild( renderer.domElement );
+
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.autoRotate = false;
+  controls.autoRotateSpeed = -1.0;
+  controls.enablePan = false;
+  controls.enableZoom = false;
+  
+  
+  camera.position.z = 2;
+  scene.background = new THREE.Color( 0x98FB98 );
+  var light = new THREE.AmbientLight( 0x888888 )
+
+  scene.add( light )
+  
+  
+  camera.add(light1)
+
+  scene.add( light1 )
+  //camera.add( light )
+  //var axisHelper = new THREE.AxesHelper( 5 );
+  //scene.add( axisHelper );
+
+  scene.add(earthMesh);
+  earthMesh.add(object);
+
+   for (let i=0;i<coords.length;i++){
+     	earthMesh.add(meshArray[i]);
+   }
+
+  material.map   = new THREE.TextureLoader().load('earthmap_16k.jpg')
+  
+  material.bumpMap    = new THREE.TextureLoader().load('elev_bump_16k.jpg')
+  material.bumpScale = 0.01
+
+//The X axis is red. The Y axis is green. The Z axis is blue.
+  var axesHelper = new THREE.AxesHelper( 5 );
+  scene.add( axesHelper );
+
+  animate();
+
+    //----this is where the magic happens-------
+  //setInterval(moveObj, 50);});
+})
+
+function moveObj() {
+
+  // for (var i=0; i<1; i+=0.005){
+  //   console.log("test",i);
+  // }
+  console.log("hello");
+    //for (var i=0; i<coords.length; i++){
+      //console.log("while loop", i, createTube(coords[i]));
+      
+      if (counter <= 1) {
+        object.position.copy(createTube(coords[4]).getPointAt(counter) );
+        console.log("position of object should be changed", object.position, counter)
+
+        // tangent = createTube(coords[2]).getTangentAt(counter).normalize();
+
+        // axis.crossVectors(up, tangent).normalize();
+
+        // var radians = Math.acos(up.dot(tangent));
+
+        // object.quaternion.setFromAxisAngle(axis, radians);
+
+        counter += 0.005
+      } else {
+        counter = 0;
+      }
+  //}
+}
+
+
+
+// function animate(time) {
+
+//  //console.log('the vector', new THREE.Vector3 (camera.position.x+1,camera.position.y,camera.position.z));
+//   //earthMesh.rotateY(0.003);
+
+//   light1.position.set(5,3,5)
+// //light1.position.copy(camera.position);
+// //light1.position.copy(new THREE.Vector3 (camera.position.x+1,camera.position.y,camera.position.z))
+//   onWindowResize();
+//   renderer.render(scene, camera);
+
+//   requestAnimationFrame(animate);
+//     //controls.update();
+// }
+
+
+
+//resizeCanvasToDisplaySize(true);
+//requestAnimationFrame(animate);
+
+
+
+//----------NEW functions---------
+function animate() {
+    onWindowResize();
+    requestAnimationFrame(animate);
+
+
+     if (counter <= 1) {
+        object.position.copy(createTube(coords[4]).getPointAt(counter) );
+        console.log("position of object should be changed", object.position, counter)
+
+        // tangent = createTube(coords[2]).getTangentAt(counter).normalize();
+
+        // axis.crossVectors(up, tangent).normalize();
+
+        // var radians = Math.acos(up.dot(tangent));
+
+        // object.quaternion.setFromAxisAngle(axis, radians);
+
+        counter += 0.005
+      } else {
+        counter = 0;
+      }
+    render();
+}
+
+function render() {
+    controls.update();
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.render(scene, camera);
+}
+
+
+function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize( window.innerWidth, window.innerHeight );
+      }
+
+
+function convertoRad(deg){
+	const rad = (Math.PI / 180) * deg;
+	return rad;
+}
+
+
+//https://rbrundritt.wordpress.com/2008/10/14/conversion-between-spherical-and-cartesian-coordinates-systems/
+//Three: The X axis is red. The Y axis is green. The Z axis is blue.
+function converttoCartesian2(R, coord1){
+  var y = R *Math.sin(convertoRad(coord1[0])); //lat degree
+  var rProj = R * Math.cos(convertoRad(coord1[0]));
+  var z = -(rProj * Math.sin(convertoRad(coord1[1])));
+  var x = rProj * Math.sin(convertoRad(90-coord1[1]));
+  
+  return new THREE.Vector3(x,y,z);
+
+}
+
+console.log("converted2", converttoCartesian2(radius1, coord1));
+
+
+//-----------------make spline---------------
+var createCurvePath = function(start, end, elevation) {
+    var start3 = globe.translateCordsToPoint(start.latitude, start.longitude);
+    var end3 = globe.translateCordsToPoint(end.latitude, end.longitude);
+    var mid = (new LatLon(start.latitude, start.longitude)).midpointTo(new LatLon(end.latitude, end.longitude));
+    var middle3 = globe.translateCordsToPoint(mid.lat(), mid.lon(), elevation);
+
+    var curveQuad = new THREE.QuadraticBezierCurve3(start3, middle3, end3);
+    //   var curveCubic = new THREE.CubicBezierCurve3(start3, start3_control, end3_control, end3);
+
+    var cp = new THREE.CurvePath();
+    cp.add(curveQuad);
+    //   cp.add(curveCubic);
+    return cp;
+}
+
+
+
+</script>
+
+</body>
+</html>
