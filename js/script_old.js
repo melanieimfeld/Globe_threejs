@@ -22,8 +22,8 @@ const CHcoords = ['47.3673', '8.55'];
 var controls, counter=0;
 
 const CURVE_SEGMENTS = 32;
-const CURVE_MIN_ALTITUDE = 0.2;
-const CURVE_MAX_ALTITUDE = 0.5;
+const CURVE_MIN_ALTITUDE = 20;
+const CURVE_MAX_ALTITUDE = 200;
 
 var loader = new THREE.FileLoader();
 var objectLoader = new THREE.ObjectLoader();
@@ -31,8 +31,7 @@ var jsonLoader = new THREE.JSONLoader();
 
 var radius = 6371;
 var radius1 = 0.5;
-const altitude = 0.4;
-var animIsRunning = true;
+const altitude = 0.3;
 
 var tangent = new THREE.Vector3();
 var axis = new THREE.Vector3();
@@ -43,9 +42,9 @@ var mouse = new THREE.Vector2(), INTERSECTED;
 
 var lightHolder = new THREE.Group();
 
-var remappedScale = d3.scaleLinear().range([0.0008, 0.005])
-remappedScale.domain([0.1, 3.85]);
-console.log("remapped scale", remappedScale(3));
+var remappedScale = d3.scaleLinear().range([2, 30])
+remappedScale.domain([0.9, 6457]);
+console.log("remapped scale", remappedScale(3000));
 
 
 
@@ -77,13 +76,29 @@ console.log("remapped scale", remappedScale(3));
     //var controls = new THREE.OrbitControls(scene);
     //var controls = new THREE.OrbitControls(camera, renderer.domElement);
 
+    function createTube(coordPair){
+      //console.log("selected cords", coordPair);
+      const interpolate = d3.geoInterpolate(coordPair[0], coordPair[1]);
+      const midCoord1 = interpolate(0.5);
+      const midCoord2 = interpolate(0.75);
+
+      //console.log("interpolate", interpolate, midCoord1);
+
+      var curve = new THREE.QuadraticBezierCurve3(
+        converttoCartesian2(radius1, coordPair[0]),
+        converttoCartesian2(radius1 + altitude, midCoord1),
+        converttoCartesian2(radius1, coordPair[1])
+      );
+
+      return curve;
+    }
 
     var sphere = new THREE.SphereGeometry(0.005, 32, 32);
     var object = new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({
         color: 0xff0000
     }));
 
-    //object.name = "sphere";
+    object.name = "sphere";
 
 
     var meshArray = [];
@@ -135,14 +150,6 @@ $("#fromto").on("click", function() {
   addGlobe();
 });
  
-$("#countries").on("change", function() {
-  //var el = $("#fromto");
-  var e = document.getElementById("countries");
-  var donor = e.options[e.selectedIndex].value;
-  //console.log("hello", e.options[e.selectedIndex].value);
-
-  addGlobe(donor);
-});
   
 
 $(document).ready(function() {
@@ -187,7 +194,8 @@ $(document).ready(function() {
   document.addEventListener( 'mousemove', onMouse, false );
   elmt.appendChild( renderer.domElement );
 
-  addGlobe("Switzerland");
+  addGlobe();
+
 
 
 
@@ -197,57 +205,47 @@ $(document).ready(function() {
   //setInterval(moveObj, 50);});
 })
 
-function addGlobe(country) {
+function addGlobe() {
 
-//remove all children
-earthMesh.children = [];
+  d3.json("data/tradeflows.json", function(error, data) {
+    //console.log("load data", data); 
+
+    for (let i=0;i<data.length;i++){
+      //console.log("load data", coords[i]); 
+      var array = [[data[i].Latitude, data[i].Longitude], CHcoords];
+      var tube = new THREE.TubeGeometry(createTube(array), 30, 0.0009, 50, false);
+      //var tube = new THREE.TubeGeometry(createTube(coords[i]), 30, (coords[i][3])*0.0001, 50, false);
+      var mesh = new THREE.Mesh(tube, new THREE.MeshBasicMaterial({
+            color: 0xff0000
+      }));
+      
+      mesh.name = data[i]["Reporting Economy"];
+      mesh.userData.amount = data[i].Value;
+      meshArray.push(mesh);
+      objectArray.push(object.clone());
+      earthMesh.add(meshArray[i]);
+      earthMesh.add(objectArray[i]);
+  
+
+  }
+
+
+  scene.add(earthMesh);
+  animate(data[0]); //execute animate only once data is loaded!
+
+  });
+
 
    d3.json("data/aiddata.json", function(error, data) {
-
-     console.log("reload data", country);
-    if (error) throw error;
-    for (let i=0;i<data.length;i++){
-      if (data[i].Donor == country){
-        //console.log("data was loaded and contains", country);
-        var array = [[data[i].lat_donor, data[i].lon_donor],[data[i].lat_recip, data[i].lon_recip]];
-        //console.log(data[i].lat_recip, data[i].lon_recip,data[i].lat_donor, data[i].lon_donor);
-        var tube = new THREE.TubeGeometry(createTube(array), 30, remappedScale(data[i].Amount), 50, false);
-        //console.log(data[i]);
-      //var tube = new THREE.TubeGeometry(createTube(coords[i]), 30, (coords[i][3])*0.0001, 50, false);
-        var mesh = new THREE.Mesh(tube, new THREE.MeshBasicMaterial({
-              color: 0xff0000
-        }));
-      //console.log(data[i].Donor,data[i].Amount);
-
-      mesh.name = data[i].Donor;
-      mesh.userData.amount = data[i].Amount;
-      meshArray.push(mesh);
-
-      var movingGlobe = object.clone();
-      movingGlobe.name = "from " + data[i].Donor + " to " + data[i].Recipient;
-      movingGlobe.userData = array;
-      objectArray.push(movingGlobe);
-      //console.log("mesh", mesh, "mesh i", meshArray[i], "full array", meshArray)
-      earthMesh.add(mesh);
-      
-      earthMesh.add(movingGlobe);
-        //console.log(e);
-      }
-    }     
-    scene.add(earthMesh);
-    //console.log("scene", scene);
-    if (animIsRunning) {
-    animate(); //execute animate only once data is loaded!
-    }
-
-    animIsRunning = false;
-
-    });
-  
+    console.log("load data", data); 
 
   //   for (let i=0;i<data.length;i++){  
 
   // }
+
+
+  });
+
 
 
 
@@ -258,7 +256,6 @@ earthMesh.children = [];
 function addGlobe2() {
 
   d3.json("data/aiddata.json", function(error, data) {
-    if (error) throw error;
     console.log("load data2", data); 
 
   //   for (let i=0;i<data.length;i++){
@@ -290,49 +287,7 @@ function addGlobe2() {
 
 
 
-function createTube(coordPair){
-      //console.log("selected cords", coordPair);
-  const interpolate = d3.geoInterpolate(coordPair[1], coordPair[0]);
-  const midCoord0 = interpolate(0.5);
-  const midCoord1 = interpolate(0.25);
-  const midCoord2 = interpolate(0.75);
 
-
-  
-  function clamp(num, min, max) {
-  return num <= min ? min : (num >= max ? max : num);
-  }
-
-
-  var start = converttoCartesian2(radius1, coordPair[1]);
-  var end = converttoCartesian2(radius1, coordPair[0])
-
-  const altitude2 = clamp(start.distanceTo(end) * .5, CURVE_MIN_ALTITUDE, CURVE_MAX_ALTITUDE);
-  //console.log("distance to", start.distanceTo(end), altitude2);
-
-  //console.log("alt", altitude);
-
-
-      //console.log("interpolate", interpolate, midCoord1);
-
-  var curve = new THREE.QuadraticBezierCurve3(
-    converttoCartesian2(radius1, coordPair[0]),
-    converttoCartesian2(radius1 + altitude, midCoord0),
-    converttoCartesian2(radius1, coordPair[1])
-  );
-
-  // var curve = new THREE.CubicBezierCurve3( 
-  //   start,
-  //   converttoCartesian2(radius1 + altitude, midCoord1),
-  //   converttoCartesian2(radius1 + altitude, midCoord2),
-  //   end
-
-  //   );
-
-  //console.log("curve coordinates US", curve);
-  return curve;
-
-}
 
 
 function onMouse(event) {
@@ -351,10 +306,9 @@ function animate(d) {
     //console.log("objectarray", objectArray);
 
      if (counter <= 1) {
-        console.log("counter", counter);
-        for (var i=0; i<objectArray.length; i++){
+        for (var i=0; i<coords.length; i++){
 
-        objectArray[i].position.copy(createTube(objectArray[i].userData).getPointAt(counter) );
+        objectArray[i].position.copy(createTube(coords[i]).getPointAt(counter) );
         //objectArray[1].position.copy(createTube(coords[5]).getPointAt(counter) );
         //console.log("position of object should be changed", objectArray[0].position, counter)
         }
@@ -363,7 +317,7 @@ function animate(d) {
       } else {
         counter = 0;
       }
-
+    //}
     anim=requestAnimationFrame(animate);
     render();
 }
@@ -382,7 +336,7 @@ function render() {
 
       if (INTERSECTED){
         INTERSECTED.object.material.color.set(0xff0000);
-        //document.getElementById("info").innerHTML = INTERSECTED.object.name;
+        document.getElementById("info").innerHTML = INTERSECTED.object.name;
         //document.getElementById("amount").innerHTML = INTERSECTED.object.userData.amount;
       }
       INTERSECTED = intersects[ 0 ];
