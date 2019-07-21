@@ -1,17 +1,27 @@
 //curves on globe
 //https://medium.com/@xiaoyangzhao/drawing-curves-on-webgl-globe-using-three-js-and-d3-draft-7e782ffd7ab
 
-const allDonors = ['Japan', 'Germany', 'United States', 'United Kingdom', 'Canada',
-       'Australia', 'Italy', 'Belgium', 'Sweden', 'France', 'Netherlands',
-       'Norway', 'Switzerland', 'Kuwait', 'United Arab Emirates',
-       'Denmark', 'Saudi Arabia', 'Austria', 'Spain', 'Finland', 'Korea'];
+const coords = [[ [47.3673, 8.55],[45.0703, 7.6869], ['Zurich - Paris'], [4]],
+  [['47.3673', '8.55'], ['51.5081', '-0.128'], ['Zurich - Paris'],[1]],
+  [['47.3673', '8.55'], ['41.3083', '-72.9279' ], ['Zurich - Paris'],[5]],
+	[['47.3673', '8.55'], ['26.1224',  '-80.13731' ], ['Zurich - Fort Lauderdale'],[7]], //ch - florida
+	[['47.3673', '8.55'], ['50.0755',  '14.4378' ], ['Zurich - Prague'],[4]], //ch - prag
+	[['47.3673', '8.55'], ['26.1224',  '-80.13731' ],['Zurich - Paris'],[12]], //ch - florida
+  [['47.3673', '8.55'],['41.3083', '-72.9279' ],['Zurich - Paris'],[20]], //ny -nh
+  [['47.3673', '8.55'],['9.010', '38.761' ],['Zurich - Paris'],[4]], //addis -ch
+  [['47.3673', '8.55'],['13.754', '100.493' ],['Zurich - Paris'],[5]], //ch bankok
+  [['47.3673', '8.55'],['14.693', '-17.447' ],['Zurich - Paris'],[30]], //ch - dakar
+  [['47.3673', '8.55'],['37.779', '-122.418' ],['Zurich - Paris'],[5]], //ch - sf
+  [['47.3673', '8.55'],['-54.806', '-68.307' ],['Zurich - Ushuaia'],[1]], //ch - ushuaia
+  [['47.3673', '8.55'],['41.009', '28.965' ],['Zurich - Instanbul'],[12]] //ch - istanbul
+  ];
 
 const CHcoords = ['47.3673', '8.55'];
 
 //const GLOBE_RADIUS = 0.5;
 var controls, counter=0;
 
-const tubeSegments = 50;
+const CURVE_SEGMENTS = 32;
 const CURVE_MIN_ALTITUDE = 0.05;
 const CURVE_MAX_ALTITUDE = 0.5;
 
@@ -20,20 +30,20 @@ var objectLoader = new THREE.ObjectLoader();
 var jsonLoader = new THREE.JSONLoader();
 
 var radius = 6371;
-var radius1 = 0.6;
-const altitude = 0.4;
+var radius1 = 0.5;
+const altitude = 0.3;
 var animIsRunning = true;
 
 var tangent = new THREE.Vector3();
 var axis = new THREE.Vector3();
 var up = new THREE.Vector3(0, 1, 0);
 var raycaster = new THREE.Raycaster();
-raycaster.linePrecision = 1;
+raycaster.linePrecision = 2;
 var mouse = new THREE.Vector2(), INTERSECTED;
 
 var lightHolder = new THREE.Group();
 
-var remappedScale = d3.scaleLinear().range([0.0015, 0.006])
+var remappedScale = d3.scaleLinear().range([0.0008, 0.005])
 remappedScale.domain([0.1, 3.85]);
 console.log("remapped scale", remappedScale(3));
 
@@ -52,7 +62,7 @@ console.log("remapped scale", remappedScale(3));
    //console.log(elmt,'elementwidth',elmt.clientWidth, 'elementheight', elmt.clientHeight,'element divided', elmt.clientWidth / elmt.clientHeight)
 
     var material  = new THREE.MeshStandardMaterial()
-    var camera  = new THREE.PerspectiveCamera(45, elmt.clientWidth / window.innerHeight, 0.1, 1000 );
+    var camera  = new THREE.PerspectiveCamera(45, elmt.clientWidth / window.innerHeight, 0.01, 1000 );
     var canvas = document.getElementById("custom");
 
   
@@ -64,7 +74,6 @@ console.log("remapped scale", remappedScale(3));
 
 
     var earthMesh = new THREE.Mesh(geometry, material)
-
     //var controls = new THREE.OrbitControls(scene);
     //var controls = new THREE.OrbitControls(camera, renderer.domElement);
 
@@ -83,37 +92,62 @@ console.log("remapped scale", remappedScale(3));
     var anim;
 
 
+  //   var sphere = new THREE.SphereGeometry(0.005, 32, 32);
+  //   var object = new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({
+  //       color: 0xff0000
+  //   }));
+
+  //   object.name = "sphere";
 
 
-//-----------update on click-----------
+  //   var meshArray = [];
+  //   var objectArray = [];
 
- $("#countries-input").on("change", function(e) {
+  //   for (let i=0;i<coords.length;i++){
+      
+  //     var tube = new THREE.TubeGeometry(createTube(coords[i]), 30, (coords[i][3])*0.0001, 50, false);
+  //     var mesh = new THREE.Mesh(tube, new THREE.MeshBasicMaterial({
+  //           color: 0xff0000
+  //     }));
+      
+  //     mesh.name = coords[i][2];
+  //     mesh.userData.amount = coords[i][3];
+  //     meshArray.push(mesh);
+  //     objectArray.push(object.clone());
+  // }
+
+
+    //console.log("object", objectArray);
+
+
+//-----------the curve-----------
+
+$("#fromto").on("click", function() {
   //var el = $("#fromto");
-  console.log("countries inout", e);
+  var el = document.getElementById("fromto").innerHTML;
+  console.log("ell", el);
+  if (el == "from") {
+    document.getElementById("fromto").innerHTML = "to";
+  } else {
+    document.getElementById("fromto").innerHTML = "from";
+  }
 
- console.log(document.getElementById('countries-input').value);
-
- var value = document.getElementById('countries-input').value;
-  addGlobe(value);
+  addGlobe();
 });
+ 
+$("#countries").on("change", function() {
+  //var el = $("#fromto");
+  var e = document.getElementById("countries");
+  var donor = e.options[e.selectedIndex].value;
+  //console.log("hello", e.options[e.selectedIndex].value);
 
+  addGlobe(donor);
+});
   
 
 $(document).ready(function() {
 
-populateDatalist(allDonors);
-
-var manager = new THREE.LoadingManager({onload:test()});
-
-function test(){
-  const loadingScreen = document.getElementById( 'loading-screen' );
-  loadingScreen.innerHTML = " ";
-  material.opacity = 0.2;
-  //loadingScreen.classList.add( 'fade-out' );
-  console.log("do this");
-}
-
-
+    var manager = new THREE.LoadingManager();
  console.log("this is a loading manager", manager);
   controls = new THREE.OrbitControls(camera, renderer.domElement);
   controls.autoRotate = false;
@@ -140,12 +174,9 @@ function test(){
   material.bumpScale = 0.01
   material.anisotropy = renderer.capabilities.getMaxAnisotropy();
   material.transparent = true;
-
-  //fogColor = new THREE.Color(0xf6f062);
-  //scene.fog = new THREE.Fog(fogColor, 0.0025, 20);
-  material.opacity = 1;
+  material.opacity = 0.5;
   //lightHolder.quaternion.copy(camera.quaternion);
-  earthMesh.rotation.y = Math.PI;
+
   //camera.add(light)
   //camera.add(light1)
 
@@ -154,7 +185,7 @@ function test(){
   //scene.add( axisHelper );
   //The X axis is red. The Y axis is green. The Z axis is blue.
   var axesHelper = new THREE.AxesHelper( 5 );
-  //scene.add( axesHelper );
+  scene.add( axesHelper );
 
   document.addEventListener( 'mousemove', onMouse, false );
   elmt.appendChild( renderer.domElement );
@@ -169,13 +200,11 @@ function test(){
   //setInterval(moveObj, 50);});
 })
 
+
+//recip -29.0003409534 25.0839009251 donor 37.592301353 138.030895577
+//script-test.js:338 interpolated coords (2) [-48.741296108938855, 40.032481495774405] (2) [-112.47575751267927, 50.848607494164675]
+
 function addGlobe(country) {
-
-//earthMesh.rotation.x = Math.PI;
-
-var el = document.getElementById("selector");
-//if country is a country in list then change title, else do nothing
-el.innerHTML = "Aid money from " + country;
 
 //remove all children
 earthMesh.children = [];
@@ -183,76 +212,30 @@ earthMesh.children = [];
 //var lineMat = new THREE.LineBasicMaterial( { color: '#fcba03', linewidth: 1 } );
 //var mesh, movingGlobe;
   var mesh, movingGlobe;
-  var lineMat = new THREE.LineBasicMaterial( { color: '#fff', linewidth: 6, scale: 2} );
-  //earthMesh.rotation.set(new THREE.Vector3( 0, 0, Math.PI / 2));
+  var lineMat = new THREE.LineBasicMaterial( { color: '#fcba03', linewidth: 3 } );
+
+//lineGeometry.vertices.push(new THREE.Vector3( 46.7978587836, 8.2086747062, 0.005) );
+//lineGeometry.vertices.push(new THREE.Vector3( 46.7978587836, 8.2086747062, 0.005) );
+//lineGeometry.vertices.push(testVect);
+//lineGeometry.vertices.push( testVect2 );
+//lineGeometry.vertices.push(new THREE.Vector3( data[i].lat_donor, data[i].lon_donor, 1) );
+
+
 
    d3.json("data/aiddata.json", function(error, data) {
-    // var mesh, movingGlobe;
-    // var lineGeometry = new THREE.Geometry();
-    // var lineMat = new THREE.LineBasicMaterial( { color: '#fcba03', linewidth: 1 } );
-
-     console.log("reload data", country);
     if (error) throw error;
-    for (let i=0;i<data.length;i++){
-      if (data[i].Donor == country){
-        //earthMesh.rotation.set(converttoCartesian2(radius1, [data[i].lat_donor, data[i].lon_donor]));
-        //console.log("data was loaded and contains", country);
-        //lat,long donor / lat,long recip
-        var array = [[data[i].lat_donor, data[i].lon_donor],[data[i].lat_recip, data[i].lon_recip]];
-        console.log("recip", data[i].lat_recip, data[i].lon_recip,"donor", data[i].lat_donor, data[i].lon_donor);
-        console.log("convert to cart", converttoCartesian2(radius1, array[0]).y,Math.PI / 2);
-        
-        //rotate earth to correct position:
-        //https://stackoverflow.com/questions/34267181/rotating-a-sphere-so-that-clicked-point-is-vector-toward-the-camera?noredirect=1&lq=1
-        //earthMesh.rotation.y = converttoCartesian2(radius1, array[0]).y;
-        
-        var tube = new THREE.TubeGeometry(createTube(array), tubeSegments, remappedScale(data[i].Amount), 50, false);
-        //console.log(data[i]);
-      //var tube = new THREE.TubeGeometry(createTube(coords[i]), 30, (coords[i][3])*0.0001, 50, false);
-        mesh = new THREE.Mesh(tube, new THREE.MeshBasicMaterial({
+
+    //japan long/lat , SA long/lat
+    //var array_jp = [[138.030895577,37.592301353,],[25.0839009251,-29.0003409534]];
+
+     //japan lat/lng , SA lat/lng
+    var array_jp = [[37.592301353,138.030895577],[-29.0003409534,25.0839009251]];
+
+    var tube = new THREE.TubeGeometry(createTube(array_jp), 30, 0.005 , 50, false);
+    mesh = new THREE.Mesh(tube, new THREE.MeshBasicMaterial({
               color: 0xff0000
         }));
-      //console.log(data[i].Donor,data[i].Amount);
-
-      mesh.name = "Aid money from " + data[i].Donor + " to " + data[i].Recipient;;
-      mesh.userData.amount = data[i].Amount;
-      meshArray.push(mesh);
-
-      movingGlobe = object.clone();
-      movingGlobe.name = "Aid money from " + data[i].Donor + " to " + data[i].Recipient;
-      movingGlobe.userData = array;
-      objectArray.push(movingGlobe);
-      //console.log("mesh", mesh, "mesh i", meshArray[i], "full array", meshArray)
-        //console.log(e);
-      earthMesh.add(mesh);
-      //earthMesh.add(line);
-      earthMesh.add(movingGlobe);
-      //console.log("mesh", mesh);
-      }
-
-
-//------------------add lines & labels---------------------------
-//labels: https://codepen.io/dxinteractive/pen/reNpOR
-      var elem = document.createElement('div');
-      elem.style.top = '600px';
-      elem.style.position = 'absolute';
-      elem.style.color = 'white';
-      elem.innerHTML = 'test';
-
-      var lineGeometry = new THREE.Geometry();
-      lineGeometry.vertices.push(converttoCartesian2(radius1, [data[i].lat_donor, data[i].lon_donor]));
-      lineGeometry.vertices.push(converttoCartesian2(radius1 + 0.06, [data[i].lat_donor, data[i].lon_donor]));
-      var line = new THREE.Line( lineGeometry, lineMat );
-      //line.add(elem);
-      //console.log("scene", scene.userData.element);
-      scene.userData.element = elem;
-
-      //scene.add(line); 
-
-    }  
-
-    //console.log("linegeom", lineGeometry, "line", line);
-  
+    earthMesh.add(mesh);
     scene.add(earthMesh);
     
     //this prevents the anim from running over and over again
@@ -273,17 +256,53 @@ earthMesh.children = [];
 }
 
 
+function addGlobe2() {
+
+  d3.json("data/aiddata.json", function(error, data) {
+    if (error) throw error;
+    console.log("load data2", data); 
+
+  //   for (let i=0;i<data.length;i++){
+  //     //console.log("load data", coords[i]); 
+  //     var array = [[data[i].Latitude, data[i].Longitude], CHcoords];
+  //     var tube = new THREE.TubeGeometry(createTube(array), 30, 0.0009, 50, false);
+  //     //var tube = new THREE.TubeGeometry(createTube(coords[i]), 30, (coords[i][3])*0.0001, 50, false);
+  //     var mesh = new THREE.Mesh(tube, new THREE.MeshBasicMaterial({
+  //           color: 0xff0000
+  //     }));
+      
+  //     mesh.name = data[i]["Reporting Economy"];
+  //     mesh.userData.amount = data[i].Value;
+  //     meshArray.push(mesh);
+  //     objectArray.push(object.clone());
+  //     earthMesh.add(meshArray[i]);
+  //     earthMesh.add(objectArray[i]);
+  
+
+  // }
+
+
+  // scene.add(earthMesh);
+  // animate(data[0]); //execute animate only once data is loaded!
+
+  });
+
+}
+
 
 
 function createTube(coordPair){
-      //console.log("selected cords", coordPair[0][0]);
+      console.log("selected cords", coordPair[1], coordPair[0]);
       //two-element array [longitude, latitude]
+  //const interpolate = d3.geoInterpolate(coordPair[1], coordPair[0]);
   const interpolate = d3.geoInterpolate([coordPair[0][1],coordPair[0][0]], [coordPair[1][1],coordPair[1][0]]);
   const midCoord0 = interpolate(0.5);
   const midCoord1 = interpolate(0.25);
   const midCoord2 = interpolate(0.75);
 
-  //console.log("interpolated coords", midCoord1, midCoord2);
+  //const midCoord0 = [22.3511148,78.6677428];
+
+  console.log("interpolated coords 0.25:", midCoord1, "0.75:", midCoord2, "0.5:", midCoord0);
   
   function clamp(num, min, max) {
     //if distance start-end is smaller than min
@@ -295,12 +314,27 @@ function createTube(coordPair){
   var end = converttoCartesian2(radius1, coordPair[1])
 
 
-  const altitude2 = clamp(start.distanceTo(end) * .4, CURVE_MIN_ALTITUDE, CURVE_MAX_ALTITUDE);
+  const altitude2 = clamp(start.distanceTo(end) * .75, CURVE_MIN_ALTITUDE, CURVE_MAX_ALTITUDE);
   //console.log("altitude", altitude2);
+  const altitude3 = 0.9;
+  
+  //switch order from interpolation back to Lat/long
+  var mid1 = converttoCartesian2(radius1+altitude2, [midCoord1[1], midCoord1[0]]);
+  var mid2 = converttoCartesian2(radius1+altitude2, [midCoord2[1], midCoord2[0]])
 
-  var mid1 = converttoCartesian2(radius1 + altitude2, [midCoord1[1], midCoord1[0]]);
-  var mid2 = converttoCartesian2(radius1 + altitude2, [midCoord2[1], midCoord2[0]]);
 
+  //console.log("distance to", start.distanceTo(end), altitude2);
+
+  //console.log("alt", altitude);
+
+
+      //console.log("interpolate", interpolate, midCoord1);
+
+  // var curve = new THREE.QuadraticBezierCurve3(
+  //   converttoCartesian2(radius1, coordPair[0]),
+  //   converttoCartesian2(radius1 + altitude3, midCoord0),
+  //   converttoCartesian2(radius1, coordPair[1])
+  // );
 
   var curve = new THREE.CubicBezierCurve3( 
     start,
@@ -356,16 +390,14 @@ function render() {
     // calculate objects intersecting the picking ray
     var intersects = raycaster.intersectObjects( earthMesh.children );
 
-  
+    //console.log("what's intersecting", INTERSECTED);
 
     if (intersects.length > 0){
     if (INTERSECTED != intersects[0] ){
 
       if (INTERSECTED){
         INTERSECTED.object.material.color.set(0xff0000);
-        $('html,body').css('cursor', 'pointer');
-        console.log("what's intersecting", INTERSECTED);
-        document.getElementById("selector").innerHTML = INTERSECTED.object.name;
+        //document.getElementById("info").innerHTML = INTERSECTED.object.name;
         //document.getElementById("amount").innerHTML = INTERSECTED.object.userData.amount;
       }
       INTERSECTED = intersects[ 0 ];
@@ -376,7 +408,7 @@ function render() {
        INTERSECTED.object.material.color.set(0xFF9090);
     }
     }
-   //$('html,body').css('cursor', 'default');
+
     // for ( var i = 0; i < intersects.length; i++ ) {
 
     //   intersects[i].object.material.color.set( 0x00BFFF );
@@ -433,17 +465,21 @@ function converttoCartesian2(R, coord1){
 
 }
 
-function populateDatalist(array) {
-  var options = '';
-  array.forEach( function (i) {
-    
-    options += '<option value="'+i+'" />';
-
-  })
-
-  var dataList = document.getElementById('huge_list');
-  dataList.innerHTML = options;
-}
-
 //console.log("converted2", converttoCartesian2(radius1, coord1));
 
+
+//-----------------make spline---------------
+// var createCurvePath = function(start, end, elevation) {
+//     var start3 = globe.translateCordsToPoint(start.latitude, start.longitude);
+//     var end3 = globe.translateCordsToPoint(end.latitude, end.longitude);
+//     var mid = (new LatLon(start.latitude, start.longitude)).midpointTo(new LatLon(end.latitude, end.longitude));
+//     var middle3 = globe.translateCordsToPoint(mid.lat(), mid.lon(), elevation);
+
+//     var curveQuad = new THREE.QuadraticBezierCurve3(start3, middle3, end3);
+//     //   var curveCubic = new THREE.CubicBezierCurve3(start3, start3_control, end3_control, end3);
+
+//     var cp = new THREE.CurvePath();
+//     cp.add(curveQuad);
+//     //   cp.add(curveCubic);
+//     return cp;
+// }
