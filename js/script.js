@@ -107,8 +107,11 @@ var manager = new THREE.LoadingManager({onload:test()});
 
 function test(){
   const loadingScreen = document.getElementById( 'loading-screen' );
+  const main = document.getElementById( 'main' );
+  main.style.display = "block";
   loadingScreen.innerHTML = " ";
   material.opacity = 0.2;
+
   //loadingScreen.classList.add( 'fade-out' );
   console.log("do this");
 }
