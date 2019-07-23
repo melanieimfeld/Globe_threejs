@@ -28,12 +28,13 @@ var tangent = new THREE.Vector3();
 var axis = new THREE.Vector3();
 var up = new THREE.Vector3(0, 1, 0);
 var raycaster = new THREE.Raycaster();
-raycaster.linePrecision = 1;
+raycaster.linePrecision = 50;
+raycaster.far = 2;
 var mouse = new THREE.Vector2(), INTERSECTED;
 
 var lightHolder = new THREE.Group();
 
-var remappedScale = d3.scaleLinear().range([0.0015, 0.006])
+var remappedScale = d3.scaleLinear().range([0.002, 0.006])
 remappedScale.domain([0.1, 3.85]);
 console.log("remapped scale", remappedScale(3));
 
@@ -103,21 +104,47 @@ $(document).ready(function() {
 
 populateDatalist(allDonors);
 
-var manager = new THREE.LoadingManager({onload:test()});
+//var manager = new THREE.LoadingManager({onload:test(), onProgress:test2()});
+//var manager = new THREE.LoadingManager({onProgress:test2(),onload:test()});
+var manager = new THREE.LoadingManager();
 
-function test(){
-  const loadingScreen = document.getElementById( 'loading-screen' );
-  const main = document.getElementById( 'main' );
-  main.style.display = "block";
-  loadingScreen.innerHTML = " ";
-  material.opacity = 0.2;
 
-  //loadingScreen.classList.add( 'fade-out' );
-  console.log("do this");
+manager.onProgress = function (itemsLoaded) { 
+const loadingScreen = document.getElementById( 'loading-screen' );
+  //loadingScreen.style.display = 'inline-block';
+  loadingScreen.classList.add( 'fade-out' );
+  // config
+
+  console.log("loading", itemsLoaded);
+
 }
 
 
- console.log("this is a loading manager", manager);
+// function test(){
+//   const loadingScreen = document.getElementById( 'loading-screen' );
+//   const main = document.getElementById( 'main' );
+//   //main.style.display = "block";
+//   loadingScreen.style.display = 'none';
+//   loadingScreen.innerHTML = " ";
+//   //material.opacity = 0.2;
+
+//   //loadingScreen.classList.add( 'fade-out' );
+//   console.log("loaded");
+// }
+
+// function test2(itemsLoaded) {
+//    const loadingScreen = document.getElementById( 'loading-screen' );
+//   //loadingScreen.style.display = 'inline-block';
+//   loadingScreen.classList.add( 'fade-out' );
+//   // config
+
+//   console.log("loading", itemsLoaded);
+//   // loadingScreen.innerHTML = " ";
+//   // material.opacity = 0.2;
+
+// }
+
+ //console.log("this is a loading manager", manager);
   controls = new THREE.OrbitControls(camera, renderer.domElement);
   controls.autoRotate = false;
   controls.autoRotateSpeed = -1.0;
@@ -138,8 +165,15 @@ function test(){
   scene.add(lightHolder);
   scene.add(ambientLight);
 
-  material.map   = new THREE.TextureLoader().load('textures/earth.jpg')
-  material.bumpMap    = new THREE.TextureLoader().load('textures/earth-bump.jpg')
+  var loaders = {
+    map: new THREE.TextureLoader(manager).load('textures/earth.jpg'),
+    bumpMap: new THREE.TextureLoader(manager).load('textures/earth-bump.jpg')
+  }
+
+  // material.map   = new THREE.TextureLoader().load('textures/earth.jpg')
+  // material.bumpMap    = new THREE.TextureLoader().load('textures/earth-bump.jpg')
+  material.map = loaders.map;
+  material.bumpMap = loaders.bumpMap;
   material.bumpScale = 0.01
   material.anisotropy = renderer.capabilities.getMaxAnisotropy();
   material.transparent = true;
@@ -213,7 +247,10 @@ earthMesh.children = [];
         //console.log(data[i]);
       //var tube = new THREE.TubeGeometry(createTube(coords[i]), 30, (coords[i][3])*0.0001, 50, false);
         mesh = new THREE.Mesh(tube, new THREE.MeshBasicMaterial({
-              color: 0xff0000
+              color: 0xff0000,
+              blending: THREE.AdditiveBlending,
+              opacity: 0.9,
+              transparent: true,
         }));
       //console.log(data[i].Donor,data[i].Amount);
 
@@ -359,33 +396,28 @@ function render() {
     // calculate objects intersecting the picking ray
     var intersects = raycaster.intersectObjects( earthMesh.children );
 
-  
-
+    console.log("intersects");
+ $('html,body').css('cursor', 'default');
     if (intersects.length > 0){
     if (INTERSECTED != intersects[0] ){
-
+      //below is true when mouse hover line
       if (INTERSECTED){
         INTERSECTED.object.material.color.set(0xff0000);
         $('html,body').css('cursor', 'pointer');
-        console.log("what's intersecting", INTERSECTED);
+        //console.log("what's intersecting", INTERSECTED);
         document.getElementById("selector").innerHTML = INTERSECTED.object.name;
         //document.getElementById("amount").innerHTML = INTERSECTED.object.userData.amount;
       }
       INTERSECTED = intersects[ 0 ];
-      //console.log("INTERSECTED 1", INTERSECTED);
+      //make item lightly colored
       INTERSECTED.object.material.color.set(0xFF9090);
 
     } else {
+      //$('html,body').css('cursor', 'pointer');
        INTERSECTED.object.material.color.set(0xFF9090);
     }
     }
-   //$('html,body').css('cursor', 'default');
-    // for ( var i = 0; i < intersects.length; i++ ) {
 
-    //   intersects[i].object.material.color.set( 0x00BFFF );
-
-    // }
-    //renderer.setSize( window.innerWidth, window.innerHeight );
     lightHolder.quaternion.copy(camera.quaternion);
     renderer.render(scene, camera);
 }
