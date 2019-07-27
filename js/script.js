@@ -109,15 +109,15 @@ populateDatalist(allDonors);
 var manager = new THREE.LoadingManager();
 
 
-manager.onProgress = function (itemsLoaded) { 
-const loadingScreen = document.getElementById( 'loading-screen' );
-  //loadingScreen.style.display = 'inline-block';
-  loadingScreen.classList.add( 'fade-out' );
-  // config
+// manager.onProgress = function (itemsLoaded) { 
+// const loadingScreen = document.getElementById( 'loading-screen' );
+//   //loadingScreen.style.display = 'inline-block';
+//   loadingScreen.classList.add( 'fade-out' );
+//   // config
 
-  console.log("loading", itemsLoaded);
+//   console.log("loading", itemsLoaded);
 
-}
+// }
 
 
 // function test(){
@@ -200,6 +200,8 @@ const loadingScreen = document.getElementById( 'loading-screen' );
 
 
 
+
+
   //animate();
 
     //----this is where the magic happens-------
@@ -208,7 +210,8 @@ const loadingScreen = document.getElementById( 'loading-screen' );
 
 function addGlobe(country) {
 
-//earthMesh.rotation.x = Math.PI;
+//$("#loading-screen").hide();
+
 
 var el = document.getElementById("selector");
 //if country is a country in list then change title, else do nothing
@@ -224,6 +227,8 @@ earthMesh.children = [];
   //earthMesh.rotation.set(new THREE.Vector3( 0, 0, Math.PI / 2));
 
    d3.json("data/aiddata.json", function(error, data) {
+
+    earthMesh.rotation.y = Math.random();
     // var mesh, movingGlobe;
     // var lineGeometry = new THREE.Geometry();
     // var lineMat = new THREE.LineBasicMaterial( { color: '#fcba03', linewidth: 1 } );
@@ -298,21 +303,46 @@ earthMesh.children = [];
     //this prevents the anim from running over and over again
     if (animIsRunning) {
     animate(); //execute animate only once data is loaded!
+        setTimeout(function() {
+      const loadingScreen = document.getElementById( 'loading-screen' );
+      //loadingScreen.style.display = 'inline-block';
+      //console.log("repeat loader");
+      //loadingScreen.classList.add( 'fade-out' );
+      $( '#loading-screen' ).fadeOut(1500);
+      //loadingScreen.style.zIndex = "-1";
+      $( '#test0' ).fadeIn("slow");
+      //loadingScreen.style.width = "0";
+      //loadingScreen.style.height = "0";
+
+    }, 2000);
+
+
     }
 
     animIsRunning = false;
+  
 
     });
   
 
+    // setTimeout(function() {
+    //   const loadingScreen = document.getElementById( 'loading-screen' );
+    //   //loadingScreen.style.display = 'inline-block';
+    //   console.log("repeat loader");
+    //   //loadingScreen.classList.add( 'fade-out' );
+    //   $( '#loading-screen' ).fadeOut("slow");
+    //   //loadingScreen.style.zIndex = "-1";
+    //   $( '#test0' ).show();
+    //   //loadingScreen.style.width = "0";
+    //   //loadingScreen.style.height = "0";
+
+    // }, 1000);
   //   for (let i=0;i<data.length;i++){  
 
   //   
 
 
 }
-
-
 
 
 function createTube(coordPair){
@@ -350,7 +380,7 @@ function createTube(coordPair){
 
     );
 
-  //console.log("curve coordinates US", curve);
+  console.log("this is the start of the curve", start);
   return curve;
 
 }
@@ -396,7 +426,7 @@ function render() {
     // calculate objects intersecting the picking ray
     var intersects = raycaster.intersectObjects( earthMesh.children );
 
-    console.log("intersects");
+    //console.log("intersects");
  $('html,body').css('cursor', 'default');
     if (intersects.length > 0){
     if (INTERSECTED != intersects[0] ){

@@ -108,10 +108,15 @@ button:focus {outline:0;}
   width:100%;
   height:100%;
  /* display: inline-block;*/
-  /*display: none;*/
+/*  display: none;*/
   position: absolute;
-  z-index: 99; /*zindex is disabling datalist??*/
-  transition: 1s opacity;
+  z-index: 1; /*zindex is disabling datalist??*/
+/*  transition: opacity 1s ;
+  -webkit-transition: opacity 1s; /*safari*/ */
+}
+
+#loading-screen.fade-out {
+    opacity: 0;
 }
 
 #search1 {
@@ -124,12 +129,11 @@ button:focus {outline:0;}
   text-align: center;
   width: 100%;
   height: 3em;
-  color: white;
+  padding-left: 50px;
+  padding-right: 50px;
+/*  color: white;*/
 }
 
-#loading-screen.fade-out {
-    opacity: 0;
-}
 
 /*this is the input box*/
 
@@ -152,6 +156,8 @@ textarea:focus, input:focus{
 .countries-input-container {
   height: 2.5rem;
   position: relative;
+  z-index: 2;
+  display: none;
 }
 #countries-input {
   background-color: #98FB98;
@@ -196,10 +202,10 @@ textarea:focus, input:focus{
 </head>
 
 <body>
-<!-- <div id="loading-screen">
-<div id="search1"><h1> FINANCIAL AID FROM X TO X </h1></div>
+<div id="loading-screen">
+<div id="search1"><h2> The effectiveness of development aid is still under debate. Yet, from 1947 to 2013, a <span style="color: red;">total of 1.5 millions of dollars </span> for foreign aid has flown from one country to another. Have a look where the foreign aid came from and went to...</h2></div>
 </div>
- -->
+
 
 </div>
 <div class="container-fluid" id="main">
@@ -229,7 +235,7 @@ textarea:focus, input:focus{
    </div>
     	<div class="row order-1">
           <div class="col-12 ml-0 mt-3 autocomplete-drop-down" >
-            <div class="countries-input-container">
+            <div class="countries-input-container" id="test0">
               <input id="countries-input" placeholder="Find a donor country" type="text" name="name" list="huge_list">
               <datalist id="huge_list"></datalist>
             </div>
@@ -239,7 +245,7 @@ textarea:focus, input:focus{
             <h2> Aid money <br> from </h2>
           </div>
            <div id="info" class="col-12">
-            <p> The AidData database includes commitment information for over 1.5 million development finance activities funded between 1947 and 2013, covers 96 donors, and includes ODA, OOF flows, Equity Investments, and Export Credits where available.</p>
+            <p> The AidData database includes commitment information of development finance activities valued over $1.5 million and funded by 96 donors. The flows visualized here are totals across the years 1947 - 2013.</p>
      <!--   <p id="loading-screen"> this a loader placeholder </p> -->
        </div>
    		</div>
