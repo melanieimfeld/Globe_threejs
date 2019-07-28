@@ -1,0 +1,180 @@
+body, html {
+  height: 100%;
+  font-family: 'Merriweather', 'helvetica' , serif;
+  background-color: #92e592;
+}
+
+canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.col-sm-3{
+	background-color: #92e592;
+}
+
+/*.col-sm-9{
+	background-color: yellow;
+}*/
+a {
+	color: #ff0000;
+/*	border: 2px solid black;*/
+
+}
+
+a:hover{
+	color: #cc0000;
+	text-decoration: none;
+}
+
+hr {
+ margin:0;
+ color: white;
+ height:3px; 
+ border:none;
+
+
+}
+/*#main {
+ display: none;
+}*/
+
+#selector{
+	font-size: 4vw;
+	height: 60%;
+/*	word-wrap: break-word*/
+}
+
+#info{
+	font-size: 1.7vw;
+	height: 40%;
+	margin-top: 20px;
+}
+
+.attrib {
+	bottom: 10px;
+	right:20px;
+	position: fixed;
+	font-size: 1vw;
+  transition: height 0.66s ease-out;
+}
+
+button:focus {outline:0;}
+
+.customBtn{
+	border: 2px solid black;
+  	background-color: #92e592;
+  	font-size: 4vw;
+  	-webkit-transition: transform .8s; /* Safari */
+  	transition: transform .8s;
+}
+
+.customBtn:hover{
+	transform: rotateY(360deg);
+}
+
+#loading-screen {
+  background:#98FB98; 
+  width:100%;
+  height:100%;
+ /* display: inline-block;*/
+/*  display: none;*/
+  position: absolute;
+  z-index: 1; /*zindex is disabling datalist??*/
+/*  transition: opacity 1s ;
+  -webkit-transition: opacity 1s; /*safari*/ */
+}
+
+#loading-screen.fade-out {
+    opacity: 0;
+}
+
+#search1 {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  margin: auto;
+  text-align: center;
+  width: 100%;
+  height: 3em;
+  padding-left: 50px;
+  padding-right: 50px;
+/*  color: white;*/
+}
+
+
+/*this is the input box*/
+
+input {
+  font-size: 16px;
+}
+
+textarea:focus, input:focus{
+    outline: none;
+}
+
+.autocomplete-drop-down {
+  position: relative;
+}
+.countries-input,
+.countries-list {
+  border: none;
+  box-sizing: border-box;
+}
+.countries-input-container {
+  height: 2.5rem;
+  position: relative;
+  z-index: 2;
+  display: none;
+}
+#countries-input {
+  background-color: #98FB98;
+  border: 2px solid black;
+  height: 2.5rem;
+  padding: 1em 0.5em;
+  position: relative;
+  transition: outline 0.2s ease;
+  transition-delay: 0.2s;
+  text-decoration: none;
+}
+.countries-list-container {
+  box-shadow: 0 8px 15px 0 rgba(33, 33, 33, 0.2);
+  opacity: 0;
+  position: relative;
+  transform: scaleY(0);
+  visibility: hidden;
+  transform-origin: center top;
+  transition: all 0.3s ease;
+  width: $containerWidth;
+  
+  &.visible {
+    opacity: 1;
+    transform: scaleY(1);
+    visibility: visible;
+  }
+}
+.huge_list {
+  align-content: middle;
+  display: flex;
+  flex-wrap: wrap;
+  max-height: 11.5em;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+
+#tooltip {
+  position: fixed;
+  left: 0;
+  top: 0;
+  min-width: 100px;
+  text-align: center;
+  padding: 5px 12px;
+  font-size: 12px;
+  color: white;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.25s linear;
+  z-index:99;
+}
