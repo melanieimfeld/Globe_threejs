@@ -1,20 +1,14 @@
 //curves on globe
 //https://medium.com/@xiaoyangzhao/drawing-curves-on-webgl-globe-using-three-js-and-d3-draft-7e782ffd7ab
-const allDonors = ['Japan', 'Germany', 'United States', 'United Kingdom', 'Canada', 'Australia', 'Italy', 'Belgium', 'Sweden', 'France', 'Netherlands', 'Norway', 'Switzerland', 'Kuwait', 'United Arab Emirates', 'Denmark', 'Saudi Arabia', 'Austria', 'Spain', 'Finland', 'Korea'];
+var allDonors = ['japan', 'germany', 'united states', 'united kingdom', 'canada', 'australia', 'italy', 'belgium', 'sweden', 'france', 'netherlands', 'norway', 'switzerland', 'kuwait', 'united arab emirates', 'denmark', 'saudi arabia', 'austria', 'spain', 'finland', 'korea'];
 //const GLOBE_RADIUS = 0.5;
 var controls, counter = 0;
-const tubeSegments = 50;
-const CURVE_MIN_ALTITUDE = 0.05;
-const CURVE_MAX_ALTITUDE = 0.5;
-var loader = new THREE.FileLoader();
-var objectLoader = new THREE.ObjectLoader();
-var jsonLoader = new THREE.JSONLoader();
+var tubeSegments = 50;
+var CURVE_MIN_ALTITUDE = 0.05;
+var CURVE_MAX_ALTITUDE = 0.5;
 var radius1 = 0.6;
-const altitude = 0.4;
+var altitude = 0.4;
 var animIsRunning = true;
-var tangent = new THREE.Vector3();
-var axis = new THREE.Vector3();
-var up = new THREE.Vector3(0, 1, 0);
 var raycaster = new THREE.Raycaster();
 raycaster.linePrecision = 50;
 raycaster.far = 2;
@@ -30,8 +24,6 @@ var geometry = new THREE.SphereGeometry(radius1, 50, 50);
 // var material  = new THREE.MeshPhongMaterial({
 //  map: texture})
 var elmt = document.getElementById("earth");
-//console.log('windowwidth',window.innerWidth, 'windowheight', window.innerHeight)
-//console.log(elmt,'elementwidth',elmt.clientWidth, 'elementheight', elmt.clientHeight,'element divided', elmt.clientWidth / elmt.clientHeight)
 var material = new THREE.MeshStandardMaterial();
 var camera = new THREE.PerspectiveCamera(45, elmt.clientWidth / window.innerHeight, 0.1, 1000);
 var canvas = document.getElementById("custom");
@@ -40,11 +32,7 @@ var renderer = new THREE.WebGLRenderer({
     canvas: canvas
 });
 //renderer.setSize( elmt.clientWidth, window.innerHeight );
-//renderer.setSize( canvas.width, canvas.height );
-//renderer.setViewport( elmt.clientWidth, window.innerHeight );
 var earthMesh = new THREE.Mesh(geometry, material);
-//var controls = new THREE.OrbitControls(scene);
-//var controls = new THREE.OrbitControls(camera, renderer.domElement);
 var sphere = new THREE.SphereGeometry(0.005, 32, 32);
 var object = new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({
     color: 0xff0000
@@ -56,9 +44,14 @@ var anim;
 var tooltipEnabledObjects = [];
 //-----------update on click-----------
 $("#countries-input").on("change", function(e) {
-    var value = document.getElementById('countries-input').value;
-    addGlobe(value);
+    var value = document.getElementById('countries-input').value.toLowerCase();
+    if (allDonors.includes(value)) {
+        addGlobe(value);
+    } else {
+        document.getElementById("selector").innerHTML = "Sorry, this is not a donor country";
+    }
 });
+
 $(document).ready(function() {
     populateDatalist(allDonors);
     //console.log("this is a loading manager", manager);
@@ -94,50 +87,31 @@ $(document).ready(function() {
     //scene.fog = new THREE.Fog(fogColor, 0.0025, 20);
     material.opacity = 1;
     //lightHolder.quaternion.copy(camera.quaternion);
-    earthMesh.rotation.y = Math.PI * 1.5;
-    //camera.add(light)
-    //camera.add(light1)
-    //camera.add( light )
-    //var axisHelper = new THREE.AxesHelper( 5 );
-    //scene.add( axisHelper );
+  
     //The X axis is red. The Y axis is green. The Z axis is blue.
     var axesHelper = new THREE.AxesHelper(5);
     //scene.add( axesHelper );
     document.addEventListener('mousemove', onMouse, false);
     //console.log("onMouse", onMouse);
     elmt.appendChild(renderer.domElement);
-    addGlobe("Germany");
+    addGlobe("germany");
 });
 
 function addGlobe(country) {
-    //$("#loading-screen").hide();
-    var el = document.getElementById("selector");
-    //if country is a country in list then change title, else do nothing
-    el.innerHTML = "Aid money from " + country;
     //remove all children
     earthMesh.children = [];
-    //var lineGeometry = new THREE.Geometry();
-    //var lineMat = new THREE.LineBasicMaterial( { color: '#fcba03', linewidth: 1 } );
-    //var mesh, movingGlobe;
-    var mesh, movingGlobe;
-    var lineMat = new THREE.LineBasicMaterial({
-        color: '#fff',
-        linewidth: 6
-    });
-    //earthMesh.rotation.set(new THREE.Vector3( 0, 0, Math.PI / 2));
+    var mesh, movingGlobe, array, tube, donorloc, loadingScreen, coeff, coeffX;
+
     d3.json("data/aiddata.json", function(error, data) {
         //earthMesh.rotation.y = Math.random();
-        // var mesh, movingGlobe;
-        // var lineGeometry = new THREE.Geometry();
-        // var lineMat = new THREE.LineBasicMaterial( { color: '#fcba03', linewidth: 1 } );
-        console.log("reload data for", country);
+        console.log("reload data for ", country);
         if (error) throw error;
-        for (let i = 0; i < data.length; i++) {
-            if (data[i].Donor == country) {
-                //earthMesh.rotation.set(converttoCartesian2(radius1, [data[i].lat_donor, data[i].lon_donor]));
-                //console.log("data was loaded and contains", country);
+        for (var i = 0; i < data.length; i++) {
+            var dbcountry = data[i].Donor.toLowerCase();
+            if (dbcountry == country) {
+                console.log("current donor location", dbcountry, converttoCartesian2(radius1, [data[i].lat_donor, data[i].lon_donor]));
                 //lat,long donor / lat,long recip
-                var array = [
+                array = [
                     [data[i].lat_donor,
                         data[i].lon_donor
                     ],
@@ -145,62 +119,51 @@ function addGlobe(country) {
                         data[i].lon_recip
                     ]
                 ];
-                //console.log("recip", data[i].lat_recip, data[i].lon_recip,"donor", data[i].lat_donor, data[i].lon_donor);
-                //console.log("convert to cart", converttoCartesian2(radius1, array[0]).y,Math.PI / 2);
                 //rotate earth to correct position:
                 //https://stackoverflow.com/questions/34267181/rotating-a-sphere-so-that-clicked-point-is-vector-toward-the-camera?noredirect=1&lq=1
                 //earthMesh.rotation.y = converttoCartesian2(radius1, array[0]).y;
-                var tube = new THREE.TubeGeometry(createTube(array), tubeSegments, remappedScale(data[i].Amount), 50, false);
-                //console.log(data[i]);
-                //var tube = new THREE.TubeGeometry(createTube(coords[i]), 30, (coords[i][3])*0.0001, 50, false);
+                tube = new THREE.TubeGeometry(createTube(array), tubeSegments, remappedScale(data[i].Amount), 50, false);
                 mesh = new THREE.Mesh(tube, new THREE.MeshBasicMaterial({
                     color: 0xff0000,
                     blending: THREE.AdditiveBlending,
                     opacity: 0.9,
                     transparent: true,
                 }));
-                controls.update();
+                //controls.update();
                 mesh.name = "Aid money from " + data[i].Donor + " to " + data[i].Recipient;
                 mesh.userData.amount = data[i].Amount;
+                mesh.userData.donorloc = converttoCartesian2(radius1, array[0]);
                 meshArray.push(mesh);
                 movingGlobe = object.clone();
                 movingGlobe.name = "Aid money from " + data[i].Donor + " to " + data[i].Recipient;
                 movingGlobe.userData = array;
                 movingGlobe.userData.amount = data[i].Amount;
                 objectArray.push(movingGlobe);
-                //console.log("mesh", mesh, "mesh i", meshArray[i], "full array", meshArray)
-                //console.log(e);
                 earthMesh.add(mesh);
-                //earthMesh.add(line);
                 earthMesh.add(movingGlobe);
                 //console.log("mesh", mesh);
             }
-            //------------------add lines & labels---------------------------
-            var lineGeometry = new THREE.Geometry();
-            lineGeometry.vertices.push(converttoCartesian2(radius1,
-                [data[i].lat_donor,
-                    data[i].lon_donor
-                ]));
-            lineGeometry.vertices.push(converttoCartesian2(radius1 + 0.06, [
-                data[i].lat_donor,
-                data[i].lon_donor
-            ]));
-            var line = new THREE.Line(lineGeometry, lineMat);
-            //scene.add(line); 
         }
-        //console.log("linegeom", lineGeometry, "line", line);
+        //console.log("show me the earthmest", earthMesh, earthMesh.children[0].userData.donorloc);
         scene.add(earthMesh);
+        donorLoc = earthMesh.children[0].userData.donorloc;
+        coeff = 2.7 + altitude/radius1;
+        coeffX = 1 + altitude/radius1;
+
+        camera.position.x = donorLoc.x * coeffX;
+        camera.position.y = donorLoc.y * coeff;
+        camera.position.z = donorLoc.z * coeff;
+        camera.lookAt(earthMesh.position);
+
         //this prevents the anim from running over and over again
         if (animIsRunning) {
             animate(); //execute animate only once data is loaded!
             setTimeout(function() {
-                const loadingScreen = document.getElementById('loading-screen');
-                //loadingScreen.style.display = 'inline-block';
-                //console.log("repeat loader");
-                //loadingScreen.classList.add( 'fade-out' );
+                loadingScreen = document.getElementById('loading-screen');
+        
                 $('#loading-screen').fadeOut(1500);
-                //loadingScreen.style.zIndex = "-1";
                 $('#test0').fadeIn("slow");
+                $('#main').fadeIn("slow");
                 //loadingScreen.style.width = "0";
                 //loadingScreen.style.height = "0";
             }, 3500);
@@ -210,32 +173,33 @@ function addGlobe(country) {
 }
 
 function createTube(coordPair) {
+    var interpolate, midCoord1, midCoord0, midCoord2, altitude2, start, end, mid1, mid2, curve;
     //console.log("selected cords", coordPair[0][0]);
     //two-element array [longitude, latitude]
-    const interpolate = d3.geoInterpolate([coordPair[0][
+    interpolate = d3.geoInterpolate([coordPair[0][
         1
     ], coordPair[0][0]], [coordPair[1][1],
         coordPair[1][0]
     ]);
-    const midCoord0 = interpolate(0.5);
-    const midCoord1 = interpolate(0.25);
-    const midCoord2 = interpolate(0.75);
+    midCoord0 = interpolate(0.5);
+    midCoord1 = interpolate(0.25);
+    midCoord2 = interpolate(0.75);
     //console.log("interpolated coords", midCoord1, midCoord2);
     function clamp(num, min, max) {
         //if distance start-end is smaller than min
         return num <= min ? min : (num >= max ? max : num);
     }
-    var start = converttoCartesian2(radius1, coordPair[0]);
-    var end = converttoCartesian2(radius1, coordPair[1]);
-    const altitude2 = clamp(start.distanceTo(end) * .4, CURVE_MIN_ALTITUDE, CURVE_MAX_ALTITUDE);
+    start = converttoCartesian2(radius1, coordPair[0]);
+    end = converttoCartesian2(radius1, coordPair[1]);
+    altitude2 = clamp(start.distanceTo(end) * 0.4, CURVE_MIN_ALTITUDE, CURVE_MAX_ALTITUDE);
     //console.log("altitude", altitude2);
-    var mid1 = converttoCartesian2(radius1 + altitude2, [
+    mid1 = converttoCartesian2(radius1 + altitude2, [
         midCoord1[1], midCoord1[0]
     ]);
-    var mid2 = converttoCartesian2(radius1 + altitude2, [
+    mid2 = converttoCartesian2(radius1 + altitude2, [
         midCoord2[1], midCoord2[0]
     ]);
-    var curve = new THREE.CubicBezierCurve3(start, mid1, mid2, end);
+    curve = new THREE.CubicBezierCurve3(start, mid1, mid2, end);
     //console.log("this is the start of the curve", start);
     return curve;
 }
@@ -268,13 +232,22 @@ function animate(d) {
 }
 
 function render() {
-    controls.update();
+    //controls.update();
     raycaster.setFromCamera(mouse, camera);
     //console.log("what is mouse", mouse);
     //console.log("intersects");
     $('html,body').css('cursor', 'default');
     onTubeHover();
+
     lightHolder.quaternion.copy(camera.quaternion);
+    //camera.up = new THREE.Vector3(0,0,1);
+    //controls.target.set(0,0,0);
+    controls.update();
+ 
+    //console.log("earthmesh", earthMesh.children);
+    //USA:  x: -0.1601627220667251, y: 0.4292660254465176, z: 0.38739977007934145
+    //germany: 0.3705488269772789, y: 0.4669917981109174, z: -0.0679133810297701
+    //camera.lookAt(new THREE.Vector3(-0.1601627220667251,0.4292660254465176,0.38739977007934145));
     renderer.render(scene, camera);
 }
 
@@ -288,22 +261,30 @@ function onWindowResize() {
 }
 
 function resizeCanvasToDisplaySize() {
+    var width, height; 
     //console.log("canvas", canvas);
-    const width = canvas.clientWidth;
+    width = canvas.clientWidth;
     //const height = canvas.clientHeight;
-    const height = window.innerHeight;
+    height = window.innerHeight;
     //console.log("canvas width and height", width, height);
+    // if existing value is different than new value, update
     if (canvas.width !== width || canvas.height !== height) {
         // you must pass false here or three.js sadly fights the browser
         renderer.setSize(width, height, false);
         camera.aspect = width / height;
         camera.updateProjectionMatrix();
-        // set render target sizes here
+
+        if (window.innerWidth < window.innerHeight) { //if screen becomes horizontal
+            canvas.height = canvas.width;
+            renderer.setSize(canvas.height, canvas.height, false);
+            camera.aspect = 1;
+            camera.updateProjectionMatrix();
+        }
     }
 }
 
 function convertoRad(deg) {
-    const rad = (Math.PI / 180) * deg;
+    var rad = (Math.PI / 180) * deg;
     return rad;
 }
 //https://rbrundritt.wordpress.com/2008/10/14/conversion-between-spherical-and-cartesian-coordinates-systems/
@@ -327,7 +308,6 @@ function populateDatalist(array) {
 
 function showTooltip(a, b) {
     var divElement = $("#tooltip");
-    console.log("show tt");
     //console.log("intersects in showtooltip()",a);
     if (divElement) {
         divElement.css({
@@ -352,7 +332,7 @@ function showTooltip(a, b) {
 
 function hideTooltip() {
     var divElement = $("#tooltip");
-    console.log("hide tt");
+    //console.log("hide tt");
     if (divElement) {
         divElement.css({
             display: "none"
@@ -368,15 +348,16 @@ function onTubeHover() {
             //below is true when mouse hovers line
             if (INTERSECTED) {
                 INTERSECTED.object.material.color.set(0xff0000);
-                console.log("mouse over line", INTERSECTED, mouse);
+                //console.log("mouse over line", INTERSECTED, mouse);
                 $('html,body').css('cursor', 'pointer');
                 showTooltip(intersects[0].point, intersects[0].object);
                 //console.log("what's intersecting", INTERSECTED);
                 //document.addEventListener( 'mousemove', onMouse, false );
-                document.getElementById("selector").innerHTML = INTERSECTED.object.name;
+                //console.log("hello", document.getElementById("selector").childNodes[0]);
+                document.getElementById("selector").textContent = INTERSECTED.object.name;
                 //document.getElementById("amount").innerHTML = INTERSECTED.object.userData.amount;
             }
-            console.log("after mouse over line?");
+            //console.log("after mouse over line?");
             INTERSECTED = intersects[0];
             //make item lightly colored
             //document.addEventListener( 'mousemove', onMouse);
