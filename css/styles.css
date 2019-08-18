@@ -49,6 +49,12 @@ a:hover{
   transition: height 0.66s ease-out;
 }
 
+#sources {
+  font-size: 11px;
+}
+
+
+
 button:focus {outline:0;}
 
 .customBtn{
@@ -194,5 +200,22 @@ textarea:focus, input:focus{
 }
 }
 
+
+.line {
+        fill: none;
+        stroke: red;
+        stroke-width: 1;
+    }
+
+  .y.axis path,
+    .y.axis line {
+      stroke: #bbb;
+      opacity: 0;
+    }
+
+    .y.axis text {
+      font-family: 'Merriweather', 'helvetica' , serif;
+      font-size: 9px;
+    }
 
 

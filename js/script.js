@@ -1,6 +1,6 @@
 //curves on globe
 //https://medium.com/@xiaoyangzhao/drawing-curves-on-webgl-globe-using-three-js-and-d3-draft-7e782ffd7ab
-var allDonors = ['japan', 'germany', 'united states', 'united kingdom', 'canada', 'australia', 'italy', 'belgium', 'sweden', 'france', 'netherlands', 'norway', 'switzerland', 'kuwait', 'united arab emirates', 'denmark', 'saudi arabia', 'austria', 'spain', 'finland', 'korea'];
+var allDonors = ['japan', 'germany', 'united states', 'united kingdom', 'canada', 'australia', 'italy', 'belgium', 'sweden', 'france', 'netherlands', 'norway', 'switzerland', 'kuwait', 'uae', 'denmark', 'saudi arabia', 'austria', 'spain', 'finland', 'korea'];
 //const GLOBE_RADIUS = 0.5;
 var controls, counter = 0;
 var tubeSegments = 50;
@@ -170,6 +170,7 @@ function addGlobe(country) {
         }
         animIsRunning = false;
     });
+    renderChart(country);
 }
 
 function createTube(coordPair) {

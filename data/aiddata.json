@@ -277,13 +277,13 @@
   {
     "Amount": 0.1,
     "Donor": "Germany",
-    "Recipient": "United Arab Emirates",
+    "Recipient": "UAE",
     "lat_donor": 51.1069818075,
     "lat_recip": 23.9052818785,
     "lon_donor": 10.385780508,
     "lon_recip": 54.3001671016,
     "name_x": "Germany",
-    "name_y": "United Arab Emirates"
+    "name_y": "UAE"
   },
   {
     "Amount": 0.75,
@@ -628,13 +628,13 @@
   },
   {
     "Amount": 0.1,
-    "Donor": "United Arab Emirates",
+    "Donor": "UAE",
     "Recipient": "India",
     "lat_donor": 23.9052818785,
     "lat_recip": 22.8857821183,
     "lon_donor": 54.3001671016,
     "lon_recip": 79.6119761026,
-    "name_x": "United Arab Emirates",
+    "name_x": "UAE",
     "name_y": "India"
   },
   {
